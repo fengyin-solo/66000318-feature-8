@@ -38,7 +38,26 @@
             <button @click="store.stepForward" :disabled="!store.matchResult || store.currentStep >= store.matchResult.steps.length - 1" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 disabled:opacity-30 rounded text-sm">下一步 ⏭</button>
             <button @click="store.resetStep" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm">⟲ 重置</button>
           </div>
-          <div class="text-sm text-slate-400">步骤: {{ store.currentStep }} / {{ store.matchResult?.steps.length || 0 }}</div>
+          <div class="text-sm text-slate-400 mb-3">步骤: {{ store.currentStep }} / {{ store.matchResult?.steps.length || 0 }}</div>
+          <div class="border-t border-slate-700 pt-3 space-y-3">
+            <div>
+              <div class="text-xs text-slate-500 mb-1">播放速度</div>
+              <div class="flex gap-1">
+                <button v-for="speed in speedOptions" :key="speed"
+                  @click="store.setPlaybackSpeed(speed)"
+                  :class="['px-2 py-1 text-xs rounded', store.playbackSpeed === speed ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600']">
+                  {{ speed }}x
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500">回溯自动暂停</span>
+              <button @click="store.togglePauseOnBacktrack"
+                :class="['relative w-10 h-5 rounded-full transition-colors', store.pauseOnBacktrack ? 'bg-orange-500' : 'bg-slate-600']">
+                <span :class="['absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform', store.pauseOnBacktrack ? 'translate-x-5' : 'translate-x-0.5']"></span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
@@ -66,5 +85,6 @@ import MatchHighlight from './components/MatchHighlight.vue'
 import TemplateLibrary from './components/TemplateLibrary.vue'
 
 const store = useRegexStore()
+const speedOptions = [0.5, 1, 1.5, 2, 4]
 onMounted(() => store.execute())
 </script>

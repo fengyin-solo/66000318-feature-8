@@ -396,6 +396,8 @@ export const useRegexStore = defineStore('regex', () => {
   const testString = ref('user@example.com admin@mail.org invalid-email')
   const currentStep = ref(0)
   const isPlaying = ref(false)
+  const playbackSpeed = ref(1)
+  const pauseOnBacktrack = ref(false)
   const nfa = ref<NFA | null>(null)
   const matchResult = ref<MatchResult | null>(null)
   const ast = ref<ASTNode | null>(null)
@@ -463,26 +465,51 @@ export const useRegexStore = defineStore('regex', () => {
     currentStep.value = 0
   }
 
+  let playTimer: ReturnType<typeof setTimeout> | null = null
+
   function play() {
     isPlaying.value = true
-    const interval = setInterval(() => {
+    const baseInterval = 200
+    const interval = baseInterval / playbackSpeed.value
+
+    function tick() {
+      if (!isPlaying.value) return
       if (matchResult.value && currentStep.value < matchResult.value.steps.length - 1) {
         currentStep.value++
+        const step = matchResult.value.steps[currentStep.value]
+        if (pauseOnBacktrack.value && step.isBacktrack) {
+          isPlaying.value = false
+          return
+        }
+        playTimer = setTimeout(tick, interval)
       } else {
         isPlaying.value = false
-        clearInterval(interval)
       }
-    }, 200)
+    }
+    playTimer = setTimeout(tick, interval)
   }
 
   function stop() {
     isPlaying.value = false
+    if (playTimer) {
+      clearTimeout(playTimer)
+      playTimer = null
+    }
+  }
+
+  function setPlaybackSpeed(speed: number) {
+    playbackSpeed.value = speed
+  }
+
+  function togglePauseOnBacktrack() {
+    pauseOnBacktrack.value = !pauseOnBacktrack.value
   }
 
   return {
-    pattern, testString, currentStep, isPlaying, nfa, matchResult, ast, error,
+    pattern, testString, currentStep, isPlaying, playbackSpeed, pauseOnBacktrack, nfa, matchResult, ast, error,
     selectedTemplate, groupColors, matchHighlight,
     execute, setPattern, setTestString, applyTemplate,
-    stepForward, stepBackward, resetStep, play, stop
+    stepForward, stepBackward, resetStep, play, stop,
+    setPlaybackSpeed, togglePauseOnBacktrack
   }
 })
